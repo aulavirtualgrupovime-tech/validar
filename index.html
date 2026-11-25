@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validación de constancias · Aula Virtual Grupo VIME</title>
+  <meta name="theme-color" content="#0A335B">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="logo_aula.png">
+  <style>
+    :root { --marino: #0A335B; --naranja: #F16F1F; --verde: #2E7D5B; --rojo: #B3261E; --gris: #5E6B7A; --claro: #EEF2F6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Poppins, "Segoe UI", system-ui, sans-serif; color: #1E2A38; background: linear-gradient(180deg, var(--marino) 0 210px, var(--claro) 210px); min-height: 100vh; }
+    .caja { max-width: 560px; margin: 0 auto; padding: 28px 18px 40px; }
+    .logos { display: flex; justify-content: center; align-items: center; gap: 22px; background: #fff; border-radius: 16px 16px 0 0; padding: 18px; border-bottom: 4px solid var(--naranja); }
+    .logos img { height: 96px; width: auto; }
+    .tarjeta { background: #fff; border-radius: 0 0 16px 16px; padding: 24px 22px; box-shadow: 0 10px 30px rgba(12, 59, 111, .15); }
+    h1 { font-size: 19px; margin: 0 0 4px; color: var(--marino); text-align: center; letter-spacing: .02em; }
+    .sub { color: var(--gris); font-size: 13px; text-align: center; margin: 0 0 18px; }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; font: inherit; font-size: 16px; padding: 11px 12px; border: 1.5px solid #CBD5E1; border-radius: 10px; text-transform: uppercase; }
+    button { font: inherit; font-weight: 600; background: var(--marino); color: #fff; border: 0; border-radius: 10px; padding: 0 18px; cursor: pointer; }
+    .res { margin-top: 20px; border-radius: 12px; padding: 18px; }
+    .ok { background: #E6F3EC; border: 1.5px solid var(--verde); }
+    .mal { background: #FDECEA; border: 1.5px solid var(--rojo); }
+    .espera { background: var(--claro); text-align: center; color: var(--gris); }
+    .sello { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+    .ok .sello { color: var(--verde); } .mal .sello { color: var(--rojo); }
+    .ico { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 17px; flex: none; }
+    .ok .ico { background: var(--verde); } .mal .ico { background: var(--rojo); }
+    dl { margin: 0; display: grid; grid-template-columns: 112px 1fr; gap: 8px 12px; font-size: 14px; }
+    dt { color: var(--gris); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding-top: 2px; }
+    dd { margin: 0; font-weight: 500; }
+    .nombre { font-size: 17px; font-weight: 700; color: var(--marino); }
+    .pie { text-align: center; font-size: 12px; color: var(--gris); margin-top: 18px; line-height: 1.5; }
+    .pie a { color: var(--marino); }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <div class="logos"><img src="logo_aula.png" alt="Aula Virtual Grupo VIME"></div>
+    <div class="tarjeta">
+      <h1>VALIDACIÓN DE CONSTANCIAS</h1>
+      <p class="sub">Escriba el código de validación impreso en la constancia o escanee su código QR.</p>
+      <form id="f"><input id="folio" placeholder="XXXX-XXXX-XXXX" maxlength="20" autocomplete="off" spellcheck="false" aria-label="Código de validación"><button>Validar</button></form>
+      <div id="res"></div>
+      <p class="pie">Registro de validación del <b>Gestor de Constancias</b> de Aula Virtual Grupo VIME.<br>La constancia la expide el emisor indicado, responsable de su contenido.<br>Por privacidad no se muestran datos personales distintos del nombre.<br><a href="https://www.aulavirtualgrupovime.com" target="_blank" rel="noopener">www.aulavirtualgrupovime.com</a></p>
+    </div>
+  </div>
+  <script>
+    const SERVIDOR = '';
+    (() => {
+      const $ = s => document.querySelector(s);
+      const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const fecha = iso => /^\d{4}-\d\d-\d\d/.test(iso || '') ? iso.slice(0, 10).split('-').reverse().join('/') : iso || '';
+      const error = (t, p) => { $('#res').innerHTML = '<div class="res mal"><div class="sello"><span class="ico">✕</span>' + t + '</div><p style="margin:0;font-size:14px">' + p + '</p></div>'; };
+      async function validar(c) {
+        c = (String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '').match(/.{1,4}/g) || []).join('-'); if (!c) return;
+        $('#folio').value = c; history.replaceState(null, '', location.pathname + '?c=' + encodeURIComponent(c));
+        $('#res').innerHTML = '<div class="res espera">Consultando el registro…</div>';
+        try {
+          const r = await (await fetch(SERVIDOR + '?c=' + encodeURIComponent(c))).json();
+          if (!r.ok) throw new Error();
+          if (!r.encontrado) return error('Código no registrado', 'No existe una constancia con el código <b>' + esc(c) + '</b>. Revise que esté bien escrito; si el problema continúa, consulte a quien la expidió.');
+          const x = r.estado === 'cancelada';
+          $('#res').innerHTML = '<div class="res ' + (x ? 'mal' : 'ok') + '"><div class="sello"><span class="ico">' + (x ? '!' : '✓') + '</span>' + (x ? 'Constancia CANCELADA' : 'Constancia registrada y vigente') + '</div><dl>' +
+            [['Otorgada a', r.nombre, 1], ['Documento', r.tipo], ['Curso', r.curso], ['Modalidad', r.modalidad], ['Fechas', r.fechas], ['Duración', r.horas], ['Capacitador', r.capacitador], ['Empresa', r.empresa], ['Folio', r.folio], ['Emitida', fecha(r.emitida)], ['Emisor', r.emisor]].filter(d => d[1]).map(d => '<dt>' + d[0] + '</dt><dd' + (d[2] ? ' class="nombre"' : '') + '>' + esc(d[1]) + '</dd>').join('') + '</dl>' +
+            (x ? '<p style="margin:12px 0 0;font-size:13px">Esta constancia fue cancelada por el emisor y ya no tiene validez.</p>' : '') + '</div>';
+        } catch (e) { error('Sin conexión con el registro', 'Intente de nuevo en unos minutos.'); }
+      }
+      $('#f').addEventListener('submit', e => { e.preventDefault(); validar($('#folio').value); });
+      const q = new URLSearchParams(location.search).get('c'); if (q) validar(q);
+    })();
+  </script>
+</body>
+</html>
