@@ -48,7 +48,7 @@
     </div>
   </div>
   <script>
-    const SERVIDOR = '';
+    const SERVIDOR = 'https://script.google.com/macros/s/AKfycbzVc8VAPTE3aYRdVqJ1yIWOHdMh-lGhQcY7akbNCsIsWPd3GY2Ejbn_szXxlAFDh5tizA/exec';
     (() => {
       const $ = s => document.querySelector(s);
       const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -59,7 +59,7 @@
         $('#folio').value = c; history.replaceState(null, '', location.pathname + '?c=' + encodeURIComponent(c));
         $('#res').innerHTML = '<div class="res espera">Consultando el registro…</div>';
         try {
-          const r = await (await fetch(SERVIDOR + '?c=' + encodeURIComponent(c))).json();
+          const r = await (await fetch(SERVIDOR + '?codigo=' + encodeURIComponent(c))).json();
           if (!r.ok) throw new Error();
           if (!r.encontrado) return error('Código no registrado', 'No existe una constancia con el código <b>' + esc(c) + '</b>. Revise que esté bien escrito; si el problema continúa, consulte a quien la expidió.');
           const x = r.estado === 'cancelada';
